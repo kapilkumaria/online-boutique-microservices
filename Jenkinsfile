@@ -6,8 +6,6 @@ pipeline {
     environment {
         REPO_URL = 'https://github.com/kapilkumaria/microservices-demo-sample.git' // Replace with your repository URL
         SCAN_TOOL = 'SonarQube' // Specify the scanning tool, e.g., SonarQube, Trivy, etc.
-      #  SONARQUBE_URL = 'http://localhost:9000' // Replace with your SonarQube URL
-      #  SONARQUBE_CREDENTIALS = credentials('sonarqube-token') // Use Jenkins credentials for secure authentication
     }
 
     stages {
