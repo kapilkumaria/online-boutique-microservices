@@ -1,0 +1,129 @@
+version: '3.8'
+
+services:
+  adservice:
+    build:
+      context: ./src/adservice # Path to the directory containing the Dockerfile
+    container_name: adservice
+    ports:
+      - "9555:9555" # Exposed port for this service
+    networks:
+      - app-network
+
+  cartservice:
+    build:
+      context: ./src/cartservice/src
+    container_name: cartservice
+    ports:
+      - "7070:7070"
+    networks:
+      - app-network
+    environment:
+      - DOTNET_EnableDiagnostics=0
+      - ASPNETCORE_HTTP_PORTS=7070
+
+  checkoutservice:
+    build:
+      context: ./src/checkoutservice
+    container_name: checkoutservice
+    ports:
+      - "5050:5050"
+    networks:
+      - app-network
+    environment:
+        - GOTRACEBACK=single
+
+  currencyservice:
+    build:
+      context: ./src/currencyservice
+    container_name: currencyservice
+    ports:
+      - "7000:7000"
+    networks:
+      - app-network
+
+  emailservice:
+    build:
+      context: ./src/emailservice
+    container_name: emailservice
+    ports:
+      - "8080:8080"
+    networks:
+      - app-network
+    environment:
+      - PYTHONUNBUFFERED=1
+      - ENABLE_PROFILER=1  
+
+
+  frontend:
+    build:
+      context: ./src/frontend
+    container_name: frontend
+    ports:
+      - "8080:8080"
+    networks:
+      - app-network
+    environment:
+      - GOTRACEBACK=single
+
+
+  loadgenerator:
+    build:
+      context: ./src/loadgenerator
+    container_name: loadgenerator
+    networks:
+      - app-network
+    environment:
+      - GEVENT_SUPPORT=True
+
+    
+
+  paymentservice:
+    build:
+      context: ./src/paymentservice
+    container_name: paymentservice
+    ports:
+      - "50051:50051"
+    networks:
+      - app-network
+
+
+  productcatalogservice:
+    build:
+      context: ./src/productcatalogservice
+    container_name: productcatalogservice
+    ports:
+      - "3550:3550"
+    networks:
+      - app-network
+    environment:
+      - GOTRACEBACK=single
+
+
+  recommendationservice:
+    build:
+      context: ./src/recommendationservice
+    container_name: recommendationservice
+    ports:
+      - "8080:8080"
+    networks:
+      - app-network
+    environment:
+      - PORT "8080"
+
+
+  shippingservice:
+    build:
+      context: ./src/shippingservice
+    container_name: shippingservice
+    ports:
+      - "50051:50051"
+    networks:
+      - app-network
+    environment:
+      - GOTRACEBACK=single
+
+
+networks:
+  app-network:
+    driver: bridge
