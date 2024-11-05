@@ -31,7 +31,13 @@ services:
     networks:
       - app-network
     environment:
-        - GOTRACEBACK=single
+      - GOTRACEBACK=single
+      - SHIPPING_SERVICE_ADDR=shippingservice:50051  # Address of shippingservice
+      - PRODUCT_CATALOG_SERVICE_ADDR=productcatalogservice:3550  # Address of productcatalogservice
+      - CART_SERVICE_ADDR=cartservice:7070  # Address of cartservice
+      - CURRENCY_SERVICE_ADDR=currencyservice:7000  # Address of currencyservice
+      - EMAIL_SERVICE_ADDR=emailservice:8080  # Address of emailservice
+      - PAYMENT_SERVICE_ADDR=paymentservice:50051  # Address of paymentservice
 
   currencyservice:
     build:
@@ -41,6 +47,9 @@ services:
       - "7000:7000"
     networks:
       - app-network
+    environment:
+      - PORT=7000  # Define the gRPC server port
+      - DISABLE_PROFILER=true   # Disable Google Cloud Profiler
 
   emailservice:
     build:
@@ -66,6 +75,13 @@ services:
     environment:
       - GOTRACEBACK=single
       - PRODUCT_CATALOG_SERVICE_ADDR=productcatalogservice:3550  # Address of productcatalogservice
+      - CURRENCY_SERVICE_ADDR=currencyservice:7000  # Address of currencyservice
+      - CART_SERVICE_ADDR=cartservice:7070  # Address of cartservice
+      - RECOMMENDATION_SERVICE_ADDR=recommendationservice:8082   # Address of recommendationservice
+      - CHECKOUT_SERVICE_ADDR=checkoutservice:5050  # Address of checkoutservice
+      - SHIPPING_SERVICE_ADDR=shippingservice:50051  # Address of shippingservice
+      - AD_SERVICE_ADDR=adservice:9555  # Address of adservice
+      - SHOPPING_ASSISTANT_SERVICE_ADDR=shoppingassistantservice:XXXX  # Set the appropriate port for shoppingassistantservice
 
 
   loadgenerator:
@@ -84,9 +100,12 @@ services:
       context: ./src/paymentservice
     container_name: paymentservice
     ports:
-      - "50051:50051"
+      - "50052:50051"
     networks:
       - app-network
+    environment:
+      - PORT=50051  # Define the gRPC server port
+      - DISABLE_PROFILER=true    # Disable Google Cloud Profiler (adjust if different flag is needed)
 
 
   productcatalogservice:
@@ -111,6 +130,8 @@ services:
       - app-network
     environment:
       - PORT=8080
+      - PRODUCT_CATALOG_SERVICE_ADDR=productcatalogservice:3550  # Address of productcatalogservice
+      - DISABLE_PROFILER=true  # Disable Stackdriver Profiler if supported
 
 
   shippingservice:
@@ -127,4 +148,4 @@ services:
 
 networks:
   app-network:
-    driver: bridge
+    external: true
