@@ -10,6 +10,15 @@ services:
     networks:
       - app-network
 
+  redis:
+    image: redis:latest
+    container_name: redis
+    ports:
+      - "6379:6379"
+    networks:
+      - app-network
+    command: ["redis-server", "--appendonly", "yes"]
+
   cartservice:
     build:
       context: ./src/cartservice/src
@@ -21,6 +30,8 @@ services:
     environment:
       - DOTNET_EnableDiagnostics=0
       - ASPNETCORE_HTTP_PORTS=7070
+      - CACHE_HOST=redis            # Correct variable name for Redis host
+      - CACHE_PORT=6379             # Correct variable name for Redis port
 
   checkoutservice:
     build:
