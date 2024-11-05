@@ -30,8 +30,12 @@ services:
     environment:
       - DOTNET_EnableDiagnostics=0
       - ASPNETCORE_HTTP_PORTS=7070
-      - CACHE_HOST=redis            # Correct variable name for Redis host
-      - CACHE_PORT=6379             # Correct variable name for Redis port
+        #      - CACHE_HOST=redis            # Correct variable name for Redis host
+        #- CACHE_PORT=6379             # Correct variable name for Redis port
+        #      - REDIS_URL=redis://redis:6379
+        #      - CACHE_REDIS=redis:6379
+        #      - REDIS_CONNECTION=redis:6379
+      - REDIS_ADDRESS=redis:6379
 
   checkoutservice:
     build:
