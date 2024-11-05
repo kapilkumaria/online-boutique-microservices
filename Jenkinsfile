@@ -30,7 +30,7 @@ pipeline {
 
                     for (service in services) {
                         dir("${SRC_DIR}/${service}") {
-                            withSonarQubeEnv(SONARQUBE_SERVER) {
+                            withSonarQubeEnv(sonarQube) {
                                 sh """
                                     mvn clean verify sonar:sonar \
                                     -Dsonar.projectKey=${service} \
