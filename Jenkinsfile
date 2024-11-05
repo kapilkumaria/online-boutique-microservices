@@ -5,7 +5,7 @@ pipeline {
 
     environment {
         REPO_URL = 'https://github.com/kapilkumaria/microservices-demo-sample.git' // Replace with your repository URL
-        SONARQUBE_SERVER = 'SonarQube' // Name you configured in Jenkins for SonarQube
+        SONARQUBE_SERVER = 'sonarQube' // Name you configured in Jenkins for SonarQube
         SONARQUBE_URL = 'http://100.25.44.199:9000'
         SONARQUBE_TOKEN = credentials('sonar-token') // Jenkins credential for SonarQube token
         SRC_DIR = 'src' // Root directory for microservices
@@ -30,7 +30,7 @@ pipeline {
 
                     for (service in services) {
                         dir("${SRC_DIR}/${service}") {
-                            withSonarQubeEnv(sonarQube) {
+                            withSonarQubeEnv(SONARQUBE_SERVER) {
                                 sh """
                                     mvn clean verify sonar:sonar \
                                     -Dsonar.projectKey=${service} \
