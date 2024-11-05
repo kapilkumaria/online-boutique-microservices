@@ -47,7 +47,7 @@ services:
       context: ./src/emailservice
     container_name: emailservice
     ports:
-      - "8080:8080"
+      - "8081:8080"
     networks:
       - app-network
     environment:
@@ -65,6 +65,7 @@ services:
       - app-network
     environment:
       - GOTRACEBACK=single
+      - PRODUCT_CATALOG_SERVICE_ADDR=productcatalogservice:3550  # Address of productcatalogservice
 
 
   loadgenerator:
@@ -105,11 +106,11 @@ services:
       context: ./src/recommendationservice
     container_name: recommendationservice
     ports:
-      - "8080:8080"
+      - "8082:8080"
     networks:
       - app-network
     environment:
-      - PORT "8080"
+      - PORT=8080
 
 
   shippingservice:
