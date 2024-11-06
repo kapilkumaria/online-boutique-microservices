@@ -1,7 +1,9 @@
 pipeline {
-    agent {
-        label 'gcp-microservices' // Ensures the job runs on the 'gcp-microservices' Jenkins slave
-    }
+      any
+
+//    agent {
+//        label 'gcp-microservices' // Ensures the job runs on the 'gcp-microservices' Jenkins slave
+//    }
 
     environment {
         REPO_URL = 'https://github.com/kapilkumaria/microservices-demo-sample.git' // Repository URL
