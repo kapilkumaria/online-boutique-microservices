@@ -48,7 +48,7 @@ pipeline {
             steps {
                 echo "Building Docker image for ${SERVICE_NAME}"
                 sh """
-                    docker build -t ${SERVICE_NAME}:latest .
+                    docker build -t ${SERVICE_NAME}:latest -f src/adservice/Dockerfile src/adservice
                 """
             }
         }
