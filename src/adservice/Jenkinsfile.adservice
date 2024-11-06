@@ -15,7 +15,7 @@ pipeline {
         stage('Clone Repository') {
             steps {
                 echo "Cloning the repository from ${REPO_URL} for ${SERVICE_NAME}"
-                git url: "${REPO_URL}", branch: 'feature/jenkinsfile.adservice' // Clone main branch or specify another if needed
+                git url: "${REPO_URL}", branch: 'feature/jenkinsfile-adservice' // Clone main branch or specify another if needed
             }
         }
 
