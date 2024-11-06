@@ -28,11 +28,14 @@ pipeline {
                     withSonarQubeEnv('sonarQube') {
 
                         sh """
-                            echo "Starting SonarQube Analysis for ${SERVICE_NAME}"
-                             /opt/sonar-scanner/sonar-scanner-4.8.0.2856-linux/bin/sonar-scanner \\
-                              -Dsonar.projectKey=${SERVICE_NAME} \\
-                              -Dsonar.sources=. \\
-                              -Dsonar.host.url=$SONARQUBE_URL \\
+                            cd src/adservice
+                            chmod +x ./gradlew
+                            ./gradlew sonarqube || true \
+                                --init-script /root/.gradle-init/init.gradle \
+                                --no-daemon \                                                        
+                              -Dsonar.projectKey=${SERVICE_NAME} \
+                              -Dsonar.sources=. \
+                              -Dsonar.host.url=$SONARQUBE_URL \
                               -Dsonar.login=$SONARQUBE_TOKEN
                         """
                     }
