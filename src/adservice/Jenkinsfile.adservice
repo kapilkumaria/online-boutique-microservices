@@ -1,5 +1,5 @@
 pipeline {
-    agent any
+    agent { label 'dev' }
 
     environment {
         REPO_URL = 'https://github.com/kapilkumaria/microservices-demo-sample.git' // Repository URL
