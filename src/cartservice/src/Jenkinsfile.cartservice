@@ -52,24 +52,4 @@ pipeline {
             echo "Pipeline failed for ${SERVICE_NAME}. Please check logs for details."
         }
     }
-A
-A
-A
-A
-A
-A
-A
-A
-A
-A
-A
-A
-A
-A
-A
-A
-A
-A
-A
-A
 }
