@@ -9,6 +9,7 @@ pipeline {
         SONARQUBE_URL = 'http://98.81.101.43:9000' // SonarQube server URL
         SONARQUBE_TOKEN = credentials('sonar-token') // SonarQube token stored in Jenkins
         SERVICE_NAME = 'adservice' // Specific service name for this Jenkinsfile
+        PATH = "${PATH}:/opt/sonar-scanner/bin" // Add sonar-scanner path to Jenkins environment
     }
 
     stages {
