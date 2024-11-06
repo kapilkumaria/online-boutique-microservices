@@ -27,17 +27,18 @@ pipeline {
                 script {
                     withSonarQubeEnv('sonarQube') {
 
-                        sh """
-                            cd src/adservice
-                            chmod +x ./gradlew
-                            ./gradlew sonarqube || true \
-                                --init-script /root/.gradle-init/init.gradle \
-                                --no-daemon \                                                        
-                              -Dsonar.projectKey=${SERVICE_NAME} \
-                              -Dsonar.sources=. \
-                              -Dsonar.host.url=$SONARQUBE_URL \
-                              -Dsonar.login=$SONARQUBE_TOKEN
-                        """
+                                   sh """
+                                        cd src/adservice
+                                        chmod +x ./gradlew
+                                        ./gradlew sonarqube || true \
+                                            --init-script /root/.gradle-init/init.gradle \
+                                            --no-daemon \
+                                            -Dsonar.projectKey=${SERVICE_NAME} \
+                                            -Dsonar.sources=. \
+                                            -Dsonar.host.url=$SONARQUBE_URL \
+                                            -Dsonar.login=$SONARQUBE_TOKEN
+                                    """
+
                     }
                 }
            }
