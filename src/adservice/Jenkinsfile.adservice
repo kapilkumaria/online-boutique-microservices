@@ -20,7 +20,7 @@ pipeline {
             steps {
                 script {
 
-                    def sonarQubeServer = sonarQube// This is the server name you configured
+                    def sonarQubeServer = SONARQUBE_SERVER // This is the server name you configured
                     echo "Using SonarQube Server: ${sonarQubeServer}"
                 }
 
