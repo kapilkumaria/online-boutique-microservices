@@ -1,0 +1,55 @@
+pipeline {
+    agent {
+        label 'gcp-microservices' // Ensures the job runs on the 'gcp-microservices' Jenkins slave
+    }
+
+    environment {
+        REPO_URL = 'https://github.com/kapilkumaria/microservices-demo-sample.git' // Repository URL
+        SONARQUBE_SERVER = 'sonarQube' // SonarQube server name configured in Jenkins
+        SONARQUBE_URL = 'http://98.81.101.43:9000' // SonarQube server URL
+        SONARQUBE_TOKEN = credentials('sonar-token') // SonarQube token stored in Jenkins
+        SERVICE_NAME = 'adservice' // Specific service name for this Jenkinsfile
+    }
+
+    stages {
+        stage('Clone Repository') {
+            steps {
+                echo "Cloning the repository from ${REPO_URL} for ${SERVICE_NAME}"
+                git url: "${REPO_URL}", branch: 'feature/Jenkinsfile.adservice' // Clone main branch or specify another if needed
+            }
+        }
+
+        stage('Code Quality Analysis') {
+            steps {
+                echo "Running SonarQube scan for ${SERVICE_NAME}"
+                withSonarQubeEnv(SONARQUBE_SERVER) {
+                    sh """
+                        mvn clean verify sonar:sonar \
+                        -Dsonar.projectKey=${SERVICE_NAME} \
+                        -Dsonar.projectName=${SERVICE_NAME} \
+                        -Dsonar.host.url=${SONARQUBE_URL} \
+                        -Dsonar.login=${SONARQUBE_TOKEN}
+                    """
+                }
+            }
+        }
+
+        stage('Build Docker Image') {
+            steps {
+                echo "Building Docker image for ${SERVICE_NAME}"
+                sh """
+                    docker build -t ${SERVICE_NAME}:latest .
+                """
+            }
+        }
+    }
+
+    post {
+        success {
+            echo "Pipeline completed successfully for ${SERVICE_NAME}!"
+        }
+        failure {
+            echo "Pipeline failed for ${SERVICE_NAME}. Please check logs for details."
+        }
+    }
+}
