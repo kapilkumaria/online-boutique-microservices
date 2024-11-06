@@ -27,7 +27,7 @@ pipeline {
                     sh """
                        echo "SonarQube URL: $SONARQUBE_URL"
                        echo "SonarQube Token: $SONARQUBE_TOKEN"
-                       sonar-scanner \\
+                        /opt/sonar-scanner/bin/sonar-scanner \\
                        -Dsonar.projectKey=my-python-project \\
                        -Dsonar.sources=. \\
                        -Dsonar.host.url=${SONARQUBE_URL} \\
