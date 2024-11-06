@@ -21,7 +21,7 @@ pipeline {
         stage('Build') {
             steps {
                 echo "Building the Java project for ${SERVICE_NAME}"
-                sh "mvn clean compile" // Adjust this command if needed
+                sh "mvn clean install" // Adjust this command if needed
             }
         }
 
