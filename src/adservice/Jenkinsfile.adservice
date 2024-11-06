@@ -28,7 +28,7 @@ pipeline {
 
                         sh """
                             echo "Starting SonarQube Analysis for ${SERVICE_NAME}"
-                            /opt/sonar-scanner/bin/sonar-scanner \\
+                             sonar-scanner \\
                               -Dsonar.projectKey=${SERVICE_NAME} \\
                               -Dsonar.sources=. \\
                               -Dsonar.host.url=$SONARQUBE_URL \\
