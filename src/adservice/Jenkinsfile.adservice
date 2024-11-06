@@ -5,6 +5,9 @@ pipeline {
 
     environment {
         REPO_URL = 'https://github.com/kapilkumaria/microservices-demo-sample.git' // Repository URL
+        SONARQUBE_SERVER = 'sonarQube' // SonarQube server name configured in Jenkins
+        SONARQUBE_URL = 'http://98.81.101.43:9000' // SonarQube server URL
+        SONARQUBE_TOKEN = credentials('sonar-token') // SonarQube token stored in Jenkins
         SERVICE_NAME = 'adservice' // Specific service name for this Jenkinsfile
     }
 
@@ -19,20 +22,19 @@ pipeline {
         stage('SonarQube Analysis') {
             steps {
                 script {
+                    withSonarQubeEnv('sonarQube') {
 
-                    def sonarQubeServer = SONARQUBE_SERVER // This is the server name you configured
-                    echo "Using SonarQube Server: ${sonarQubeServer}"
+                        sh """
+                            echo "Starting SonarQube Analysis for ${SERVICE_NAME}"
+                            sonar-scanner \\
+                              -Dsonar.projectKey=${SERVICE_NAME} \\
+                              -Dsonar.sources=. \\
+                              -Dsonar.host.url=$SONARQUBE_URL \\
+                              -Dsonar.login=$SONARQUBE_TOKEN
+                        """
+                    }
                 }
-
-                sh """
-                   echo "Starting SonarQube Analysis for ${SERVICE_NAME}"
-                   /opt/sonar-scanner/bin/sonar-scanner \\
-                   -Dsonar.projectKey=${SERVICE_NAME} \\
-                   -Dsonar.sources=. \\
-                   -Dsonar.host.url=$SONAR_HOST_URL \\
-                   -Dsonar.login=$SONAR_AUTH_TOKEN
-                """
-            }
+           }
         }
 
         stage('Build Docker Image') {
