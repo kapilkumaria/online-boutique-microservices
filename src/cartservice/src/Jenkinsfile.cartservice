@@ -26,7 +26,8 @@ pipeline {
                     
                     # Manually install Dotnet
                     echo "Manually installing Dotnet SDK"
-                    DOTNET_VERSION=6.0.427
+                    
+                    DOTNET_VERSION=8.0.100   # <-- Update SDK version here
                     DOTNET_DOWNLOAD_URL="https://dotnetcli.azureedge.net/dotnet/Sdk/$DOTNET_VERSION/dotnet-sdk-$DOTNET_VERSION-linux-x64.tar.gz"
                     INSTALL_DIR="/usr/share/dotnet"
 
