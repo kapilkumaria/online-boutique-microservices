@@ -17,6 +17,13 @@ pipeline {
             }
         }
 
+        stage('Test Docker') {
+            steps {
+                sh 'docker --version'
+            }
+        }
+
+
         stage('Restore Dependencies and SonarQube Analysis') {
             // Using Docker within this stage to run .NET SDK commands
             agent {
