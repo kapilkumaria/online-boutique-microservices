@@ -24,9 +24,21 @@ pipeline {
                     else
                         echo "Docker is already installed"
                     fi
+
+                    # Check if Dotnet is installed
+                    if ! command -v dotnet &> /dev/null; then
+                        echo "Dotnet SDK not found, installing..."
+                        wget https://dotnet.microsoft.com/download/dotnet/scripts/v1/dotnet-install.sh
+                        chmod +x dotnet-install.sh
+                        ./dotnet-install.sh -c 6.0
+                        export PATH="$HOME/.dotnet:$PATH"
+                    else
+                        echo "Dotnet SDK is already installed"
+                    fi
                     
-                    # Display Docker version
+                    # Display Docker and Dotnet versions
                     docker --version
+                    dotnet --version                                        
                 '''
             }
         }
