@@ -95,7 +95,7 @@ pipeline {
             steps {
                 echo "Building Docker image for ${SERVICE_NAME}"
                 sh """
-                    docker build -t ${SERVICE_NAME}:latest -f src/cartservice/src/Dockerfile src/cartservice
+                    docker build -t ${SERVICE_NAME}:latest -f src/cartservice/src/Dockerfile src/cartservice/src
                 """
             }
         }
