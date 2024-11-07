@@ -1,35 +1,52 @@
 pipeline {
-    agent {
-        label 'gcp-microservices' // Ensures the job runs on the 'gcp-microservices' Jenkins slave
-    }
+    agent { label 'dev' }
 
     environment {
         REPO_URL = 'https://github.com/kapilkumaria/microservices-demo-sample.git' // Repository URL
         SONARQUBE_SERVER = 'sonarQube' // SonarQube server name configured in Jenkins
-        SONARQUBE_URL = 'http://98.81.101.43:9000' // SonarQube server URL
+        SONARQUBE_URL = 'http://54.236.37.7:9000' // SonarQube server URL
         SONARQUBE_TOKEN = credentials('sonar-token') // SonarQube token stored in Jenkins
-        SERVICE_NAME = 'cartservice' // Specific service name for this Jenkinsfile
+        SERVICE_NAME = 'cartservice' // Service name specific to this Jenkinsfile
+        DOTNET_SDK_VERSION = '6.0' // Specify the .NET SDK version to use
     }
 
     stages {
         stage('Clone Repository') {
             steps {
                 echo "Cloning the repository from ${REPO_URL} for ${SERVICE_NAME}"
-                git url: "${REPO_URL}", branch: 'feature/jenkinsfile.cartservice' // Clone main branch or specify another if needed
+                git url: "${REPO_URL}", branch: 'feature/jenkinsfile-cartservice' // Clone the specified branch
             }
         }
 
-        stage('Code Quality Analysis') {
+        stage('Restore Dependencies') {
             steps {
-                echo "Running SonarQube scan for ${SERVICE_NAME}"
-                withSonarQubeEnv(SONARQUBE_SERVER) {
-                    sh """
-                        mvn clean verify sonar:sonar \
-                        -Dsonar.projectKey=${SERVICE_NAME} \
-                        -Dsonar.projectName=${SERVICE_NAME} \
-                        -Dsonar.host.url=${SONARQUBE_URL} \
-                        -Dsonar.login=${SONARQUBE_TOKEN}
-                    """
+                echo "Restoring dependencies for ${SERVICE_NAME}"
+                sh """
+                    cd src/cartservice
+                    dotnet restore
+                """
+            }
+        }
+
+        stage('SonarQube Analysis') {
+            steps {
+                script {
+                    withSonarQubeEnv('sonarQube') {
+                        sh """
+                            cd src/cartservice
+                            dotnet sonarscanner begin \
+                                /k:"${SERVICE_NAME}" \
+                                /d:sonar.host.url="${SONARQUBE_URL}" \
+                                /d:sonar.login="${SONARQUBE_TOKEN}"
+
+                            # Build the project after starting SonarQube analysis
+                            dotnet build --no-incremental
+
+                            # End the SonarQube analysis
+                            dotnet sonarscanner end \
+                                /d:sonar.login="${SONARQUBE_TOKEN}"
+                        """
+                    }
                 }
             }
         }
@@ -38,7 +55,7 @@ pipeline {
             steps {
                 echo "Building Docker image for ${SERVICE_NAME}"
                 sh """
-                    docker build -t ${SERVICE_NAME}:latest .
+                    docker build -t ${SERVICE_NAME}:latest -f src/cartservice/Dockerfile src/cartservice
                 """
             }
         }
