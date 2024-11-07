@@ -18,21 +18,33 @@ pipeline {
             }
         }
 
+        stage('Install Docker') {
+            steps {
+                echo "Installing Docker..."
+                sh '''
+                    if ! command -v docker &> /dev/null; then
+                        curl -fsSL https://get.docker.com | sh
+                        sudo usermod -aG docker $USER
+                        newgrp docker
+                    else
+                        echo "Docker is already installed"
+                    fi
+                '''
+            }
+        }
+
         stage('Test Docker') {
             steps {
-                // Display environment variables to check the PATH
-                sh 'echo $PATH'
-                sh 'whoami'  // Verify user
-                sh 'docker --version'  // Check Docker version
+                echo "Testing Docker installation..."
+                sh 'docker --version'  // Verify Docker version
             }
         }    
 
         stage('Restore Dependencies and SonarQube Analysis') {
-            // Using Docker within this stage to run .NET SDK commands
             agent {
                 docker {
                     image 'mcr.microsoft.com/dotnet/sdk:6.0'
-                    args '-v /var/run/docker.sock:/var/run/docker.sock' // If you need Docker builds within this container
+                    args '-v /var/run/docker.sock:/var/run/docker.sock' // Attach Docker socket for inner Docker commands
                 }
             }
             steps {
@@ -59,7 +71,6 @@ pipeline {
         }
 
         stage('Build Docker Image') {
-            // Running this stage in the Docker container with .NET SDK
             agent {
                 docker {
                     image 'mcr.microsoft.com/dotnet/sdk:6.0'
