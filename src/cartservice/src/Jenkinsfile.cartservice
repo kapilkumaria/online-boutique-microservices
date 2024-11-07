@@ -18,28 +18,6 @@ pipeline {
             }
         }
 
-        stage('Install Docker') {
-            steps {
-                echo "Installing Docker..."
-                sh '''
-                    if ! command -v docker &> /dev/null; then
-                        curl -fsSL https://get.docker.com | sh
-                        sudo usermod -aG docker $USER
-                        newgrp docker
-                    else
-                        echo "Docker is already installed"
-                    fi
-                '''
-            }
-        }
-
-        stage('Test Docker') {
-            steps {
-                echo "Testing Docker installation..."
-                sh 'docker --version'  // Verify Docker version
-            }
-        }    
-
         stage('Restore Dependencies and SonarQube Analysis') {
             agent {
                 docker {
@@ -71,17 +49,25 @@ pipeline {
         }
 
         stage('Build Docker Image') {
-            agent {
-                docker {
-                    image 'mcr.microsoft.com/dotnet/sdk:6.0'
-                    args '-v /var/run/docker.sock:/var/run/docker.sock'
-                }
-            }
             steps {
-                echo "Building Docker image for ${SERVICE_NAME}"
-                sh """
+                echo "Installing Docker if not already installed, then building Docker image for ${SERVICE_NAME}"
+                sh '''
+                    # Check if Docker is installed
+                    if ! command -v docker &> /dev/null; then
+                        echo "Docker not found, installing..."
+                        curl -fsSL https://get.docker.com | sh
+                        sudo usermod -aG docker $USER
+                        newgrp docker
+                    else
+                        echo "Docker is already installed"
+                    fi
+                    
+                    # Display Docker version
+                    docker --version
+
+                    # Build Docker image
                     docker build -t ${SERVICE_NAME}:latest -f src/cartservice/Dockerfile src/cartservice
-                """
+                '''
             }
         }
     }
