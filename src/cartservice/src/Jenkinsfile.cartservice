@@ -6,7 +6,7 @@ pipeline {
         SONARQUBE_SERVER = 'sonarQube'
         SONARQUBE_URL = 'http://34.201.15.58:9000'
         SERVICE_NAME = 'cartservice'
-        PATH = "/usr/bin:${env.PATH}"
+        PATH = "/usr/share/dotnet:/usr/bin:${env.PATH}"
     }
     
     stages {
@@ -24,23 +24,19 @@ pipeline {
                         echo "Docker is already installed"
                     fi
                     
-                    # Check if Dotnet is installed
-                    if ! command -v dotnet &> /dev/null; then
-                        echo "Dotnet SDK not found, installing..."
-                        wget https://dotnet.microsoft.com/download/dotnet/scripts/v1/dotnet-install.sh
-                        chmod +x dotnet-install.sh
-                        ./dotnet-install.sh -c 6.0 --install-dir /usr/share/dotnet  # <-- Changed line to specify install directory
-                        export PATH="/usr/share/dotnet:$PATH"                       # <-- Added line to update PATH
-                    else
-                        echo "Dotnet SDK is already installed"
-                    fi
+                    # Force install Dotnet
+                    echo "Forcing installation of Dotnet SDK"
+                    wget https://dotnet.microsoft.com/download/dotnet/scripts/v1/dotnet-install.sh
+                    chmod +x dotnet-install.sh
+                    ./dotnet-install.sh -c 6.0 --install-dir /usr/share/dotnet --no-cdn --verbose
+
+                    # Set PATH to ensure dotnet is recognized
+                    export PATH="/usr/share/dotnet:$PATH"
+                    echo "PATH after installation: $PATH"
                     
-                    # Ensure dotnet is in PATH
-                    echo "PATH after installation: $PATH"                         # <-- Added line to verify PATH
-                    
-                    # Display Docker and Dotnet versions
+                    # Display Docker and Dotnet versions to verify installation
                     docker --version
-                    dotnet --version
+                    dotnet --version || echo "Dotnet installation failed; please check setup steps."
                 '''
             }
         }
@@ -58,20 +54,20 @@ pipeline {
                     withSonarQubeEnv('sonarQube') {
                         withCredentials([string(credentialsId: 'sonar-token', variable: 'SONARQUBE_TOKEN')]) {
                             sh '''
-                                export PATH="/usr/share/dotnet:$PATH"           # <-- Added line to ensure PATH is set
+                                export PATH="/usr/share/dotnet:$PATH"
                                 cd src/cartservice
                                 dotnet restore
                                 dotnet sonarscanner begin \
                                     /k:"${SERVICE_NAME}" \
                                     /d:sonar.host.url="${SONARQUBE_URL}" \
-                                    /d:sonar.login="$SONARQUBE_TOKEN"          # <-- Removed Groovy interpolation for secure handling
+                                    /d:sonar.login="$SONARQUBE_TOKEN"
 
                                 # Build the project after starting SonarQube analysis
                                 dotnet build --no-incremental
 
                                 # End the SonarQube analysis
                                 dotnet sonarscanner end \
-                                    /d:sonar.login="$SONARQUBE_TOKEN"          # <-- Removed Groovy interpolation for secure handling
+                                    /d:sonar.login="$SONARQUBE_TOKEN"
                             '''
                         }
                     }
