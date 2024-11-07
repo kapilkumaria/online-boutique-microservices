@@ -24,14 +24,23 @@ pipeline {
                         echo "Docker is already installed"
                     fi
                     
-                    # Force install Dotnet
-                    echo "Forcing installation of Dotnet SDK"
-                    wget https://dotnet.microsoft.com/download/dotnet/scripts/v1/dotnet-install.sh
-                    chmod +x dotnet-install.sh
-                    ./dotnet-install.sh -c 6.0 --install-dir /usr/share/dotnet --no-cdn --verbose
+                    # Manually install Dotnet
+                    echo "Manually installing Dotnet SDK"
+                    DOTNET_VERSION=6.0.427
+                    DOTNET_DOWNLOAD_URL="https://dotnetcli.azureedge.net/dotnet/Sdk/$DOTNET_VERSION/dotnet-sdk-$DOTNET_VERSION-linux-x64.tar.gz"
+                    INSTALL_DIR="/usr/share/dotnet"
 
-                    # Set PATH to ensure dotnet is recognized
-                    export PATH="/usr/share/dotnet:$PATH"
+                    # Clean up any existing installation if necessary
+                    sudo rm -rf $INSTALL_DIR
+                    sudo mkdir -p $INSTALL_DIR
+
+                    # Download and extract the SDK
+                    curl -L $DOTNET_DOWNLOAD_URL -o dotnet-sdk.tar.gz
+                    sudo tar -zxf dotnet-sdk.tar.gz -C $INSTALL_DIR
+                    rm dotnet-sdk.tar.gz
+
+                    # Add to PATH and verify
+                    export PATH="$INSTALL_DIR:$PATH"
                     echo "PATH after installation: $PATH"
                     
                     # Display Docker and Dotnet versions to verify installation
