@@ -7,7 +7,9 @@ pipeline {
         SONARQUBE_URL = 'http://54.236.37.7:9000'
         SONARQUBE_TOKEN = credentials('sonar-token')
         SERVICE_NAME = 'cartservice'
-        PATH = "/usr/bin/docker" // Explicitly add Docker path
+        PATH = "/usr/bin:${env.PATH}"
+    }
+
     }
 
     stages {
@@ -17,6 +19,16 @@ pipeline {
                 git url: "${REPO_URL}", branch: 'feature/jenkinsfile-cartservice'
             }
         }
+
+        stage('Test Docker') {
+            steps {
+                // Display environment variables to check the PATH
+                sh 'echo $PATH'
+                sh 'whoami'  // Verify user
+                sh 'docker --version'  // Check Docker version
+            }
+        }
+
 
         stage('Test Docker') {
             steps {
