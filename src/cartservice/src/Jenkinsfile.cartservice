@@ -9,9 +9,7 @@ pipeline {
         SERVICE_NAME = 'cartservice'
         PATH = "/usr/bin:${env.PATH}"
     }
-
-    }
-
+    
     stages {
         stage('Clone Repository') {
             steps {
