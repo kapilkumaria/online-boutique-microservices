@@ -11,6 +11,26 @@ pipeline {
     }
     
     stages {
+        stage('Setup Environment') {
+            steps {
+                echo "Installing Docker if not already installed"
+                sh '''
+                    # Check if Docker is installed
+                    if ! command -v docker &> /dev/null; then
+                        echo "Docker not found, installing..."
+                        curl -fsSL https://get.docker.com | sh
+                        sudo usermod -aG docker $USER
+                        newgrp docker
+                    else
+                        echo "Docker is already installed"
+                    fi
+                    
+                    # Display Docker version
+                    docker --version
+                '''
+            }
+        }
+
         stage('Clone Repository') {
             steps {
                 echo "Cloning the repository from ${REPO_URL} for ${SERVICE_NAME}"
@@ -19,12 +39,6 @@ pipeline {
         }
 
         stage('Restore Dependencies and SonarQube Analysis') {
-            agent {
-                docker {
-                    image 'mcr.microsoft.com/dotnet/sdk:6.0'
-                    args '-v /var/run/docker.sock:/var/run/docker.sock' // Attach Docker socket for inner Docker commands
-                }
-            }
             steps {
                 script {
                     withSonarQubeEnv('sonarQube') {
@@ -50,24 +64,10 @@ pipeline {
 
         stage('Build Docker Image') {
             steps {
-                echo "Installing Docker if not already installed, then building Docker image for ${SERVICE_NAME}"
-                sh '''
-                    # Check if Docker is installed
-                    if ! command -v docker &> /dev/null; then
-                        echo "Docker not found, installing..."
-                        curl -fsSL https://get.docker.com | sh
-                        sudo usermod -aG docker $USER
-                        newgrp docker
-                    else
-                        echo "Docker is already installed"
-                    fi
-                    
-                    # Display Docker version
-                    docker --version
-
-                    # Build Docker image
+                echo "Building Docker image for ${SERVICE_NAME}"
+                sh """
                     docker build -t ${SERVICE_NAME}:latest -f src/cartservice/Dockerfile src/cartservice
-                '''
+                """
             }
         }
     }
