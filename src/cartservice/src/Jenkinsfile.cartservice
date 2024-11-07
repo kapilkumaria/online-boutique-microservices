@@ -12,7 +12,7 @@ pipeline {
     stages {
         stage('Setup Environment') {
             steps {
-                echo "Installing Docker and Dotnet if not already installed"
+                echo "Installing Docker, Dotnet SDK, and SonarScanner if not already installed"
                 sh '''
                     # Check if Docker is installed
                     if ! command -v docker &> /dev/null; then
@@ -24,29 +24,29 @@ pipeline {
                         echo "Docker is already installed"
                     fi
                     
-                    # Manually install Dotnet
-                    echo "Manually installing Dotnet SDK"
-                    
-                    DOTNET_VERSION=8.0.100   # <-- Update SDK version here
+                    # Install Dotnet SDK (assuming .NET 8.0)
+                    DOTNET_VERSION=8.0.100
                     DOTNET_DOWNLOAD_URL="https://dotnetcli.azureedge.net/dotnet/Sdk/$DOTNET_VERSION/dotnet-sdk-$DOTNET_VERSION-linux-x64.tar.gz"
                     INSTALL_DIR="/usr/share/dotnet"
 
-                    # Clean up any existing installation if necessary
                     sudo rm -rf $INSTALL_DIR
                     sudo mkdir -p $INSTALL_DIR
 
-                    # Download and extract the SDK
                     curl -L $DOTNET_DOWNLOAD_URL -o dotnet-sdk.tar.gz
                     sudo tar -zxf dotnet-sdk.tar.gz -C $INSTALL_DIR
                     rm dotnet-sdk.tar.gz
 
-                    # Add to PATH and verify
                     export PATH="$INSTALL_DIR:$PATH"
                     echo "PATH after installation: $PATH"
-                    
-                    # Display Docker and Dotnet versions to verify installation
+
+                    # Install dotnet-sonarscanner as a global tool
+                    dotnet tool install --global dotnet-sonarscanner
+                    export PATH="$PATH:$HOME/.dotnet/tools"  # Make sure global tools are accessible
+
+                    # Verify installations
                     docker --version
-                    dotnet --version || echo "Dotnet installation failed; please check setup steps."
+                    dotnet --version
+                    dotnet sonarscanner --version || echo "SonarScanner installation failed; please check setup steps."
                 '''
             }
         }
@@ -64,7 +64,7 @@ pipeline {
                     withSonarQubeEnv('sonarQube') {
                         withCredentials([string(credentialsId: 'sonar-token', variable: 'SONARQUBE_TOKEN')]) {
                             sh '''
-                                export PATH="/usr/share/dotnet:$PATH"
+                                export PATH="/usr/share/dotnet:$PATH:$HOME/.dotnet/tools"  # Ensure sonarscanner is on PATH
                                 cd src/cartservice
                                 dotnet restore
                                 dotnet sonarscanner begin \
