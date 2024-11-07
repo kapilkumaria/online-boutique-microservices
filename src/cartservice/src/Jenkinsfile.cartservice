@@ -24,7 +24,7 @@ pipeline {
                         echo "Docker is already installed"
                     fi
                     
-                    # Install Dotnet SDK (assuming .NET 8.0)
+                    # Install Dotnet SDK
                     DOTNET_VERSION=8.0.100
                     DOTNET_DOWNLOAD_URL="https://dotnetcli.azureedge.net/dotnet/Sdk/$DOTNET_VERSION/dotnet-sdk-$DOTNET_VERSION-linux-x64.tar.gz"
                     INSTALL_DIR="/usr/share/dotnet"
@@ -39,14 +39,20 @@ pipeline {
                     export PATH="$INSTALL_DIR:$PATH"
                     echo "PATH after installation: $PATH"
 
-                    # Install dotnet-sonarscanner as a global tool
-                    dotnet tool install --global dotnet-sonarscanner
+                    # Install dotnet-sonarscanner as a global tool if not already installed
+                    if ! dotnet tool list -g | grep -q dotnet-sonarscanner; then
+                        echo "Installing dotnet-sonarscanner"
+                        dotnet tool install --global dotnet-sonarscanner
+                    else
+                        echo "dotnet-sonarscanner is already installed"
+                    fi
+
                     export PATH="$PATH:$HOME/.dotnet/tools"  # Make sure global tools are accessible
 
                     # Verify installations
                     docker --version
                     dotnet --version
-                    dotnet sonarscanner --version || echo "SonarScanner installation failed; please check setup steps."
+                    dotnet sonarscanner --version || echo "SonarScanner installation verification failed; please check setup steps."
                 '''
             }
         }
