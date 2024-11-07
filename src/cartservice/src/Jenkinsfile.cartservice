@@ -1,39 +1,36 @@
 pipeline {
-    agent { label 'dev' }
+    agent { label 'dev' } // Main Jenkins agent with the 'dev' label
 
     environment {
-        REPO_URL = 'https://github.com/kapilkumaria/microservices-demo-sample.git' // Repository URL
-        SONARQUBE_SERVER = 'sonarQube' // SonarQube server name configured in Jenkins
-        SONARQUBE_URL = 'http://54.236.37.7:9000' // SonarQube server URL
-        SONARQUBE_TOKEN = credentials('sonar-token') // SonarQube token stored in Jenkins
-        SERVICE_NAME = 'cartservice' // Service name specific to this Jenkinsfile
-        DOTNET_SDK_VERSION = '6.0' // Specify the .NET SDK version to use
+        REPO_URL = 'https://github.com/kapilkumaria/microservices-demo-sample.git'
+        SONARQUBE_SERVER = 'sonarQube'
+        SONARQUBE_URL = 'http://54.236.37.7:9000'
+        SONARQUBE_TOKEN = credentials('sonar-token')
+        SERVICE_NAME = 'cartservice'
     }
 
     stages {
         stage('Clone Repository') {
             steps {
                 echo "Cloning the repository from ${REPO_URL} for ${SERVICE_NAME}"
-                git url: "${REPO_URL}", branch: 'feature/jenkinsfile-cartservice' // Clone the specified branch
+                git url: "${REPO_URL}", branch: 'feature/jenkinsfile-cartservice'
             }
         }
 
-        stage('Restore Dependencies') {
-            steps {
-                echo "Restoring dependencies for ${SERVICE_NAME}"
-                sh """
-                    cd src/cartservice
-                    dotnet restore
-                """
+        stage('Restore Dependencies and SonarQube Analysis') {
+            // Using Docker within this stage to run .NET SDK commands
+            agent {
+                docker {
+                    image 'mcr.microsoft.com/dotnet/sdk:6.0'
+                    args '-v /var/run/docker.sock:/var/run/docker.sock' // If you need Docker builds within this container
+                }
             }
-        }
-
-        stage('SonarQube Analysis') {
             steps {
                 script {
                     withSonarQubeEnv('sonarQube') {
                         sh """
                             cd src/cartservice
+                            dotnet restore
                             dotnet sonarscanner begin \
                                 /k:"${SERVICE_NAME}" \
                                 /d:sonar.host.url="${SONARQUBE_URL}" \
@@ -52,6 +49,13 @@ pipeline {
         }
 
         stage('Build Docker Image') {
+            // Running this stage in the Docker container with .NET SDK
+            agent {
+                docker {
+                    image 'mcr.microsoft.com/dotnet/sdk:6.0'
+                    args '-v /var/run/docker.sock:/var/run/docker.sock'
+                }
+            }
             steps {
                 echo "Building Docker image for ${SERVICE_NAME}"
                 sh """
