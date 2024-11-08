@@ -93,7 +93,9 @@ pipeline {
                     string(credentialsId: 'JFROG_IMAGE_TAG', variable: 'JFROG_IMAGE_TAG')                    
                 ]) {
                 sh '''
-                  docker login $JFROG_URL --username $JFROG_USERNAME --password $JFROG_TOKEN
+ 
+                  echo "$JFROG_TOKEN" | docker login "$JFROG_URL" --username "$JFROG_USERNAME" --password-stdin
+
                   docker tag $SERVICE_NAME:latest $JFROG_IMAGE_TAG/$SERVICE_NAME:$BUILD_NUMBER
                   docker push $JFROG_IMAGE_TAG/$SERVICE_NAME:$BUILD_NUMBER
                 '''
