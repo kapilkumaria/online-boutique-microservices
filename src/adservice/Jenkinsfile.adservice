@@ -12,9 +12,7 @@ pipeline {
         SONARQUBE_TOKEN = credentials('sonar-token') // SonarQube token stored in Jenkins
         SERVICE_NAME = 'adservice' // Specific service name for this Jenkinsfile
         ECR_REPO_MICROSERVICES = '931058976119.dkr.ecr.us-east-1.amazonaws.com/gcp-adservice'
-        PATH = "/opt/sonar-scanner/sonar-scanner-4.8.0.2856-linux/bin:${env.PATH}"
-        
-        
+        PATH = "/opt/sonar-scanner/sonar-scanner-4.8.0.2856-linux/bin:${env.PATH}"                    
     }
 
     stages {
@@ -24,9 +22,7 @@ pipeline {
                 git url: "${REPO_URL}", branch: 'feature/jenkinsfile-adservice' // Clone specified branch
             }
         }
-
         
-
         stage('SonarQube Analysis') {
             steps {
                 script {
@@ -82,7 +78,28 @@ pipeline {
                     '''
                     }
             }
-         }        
+         }
+
+         
+        stage('Push AdService Image to JFrog Artifactory') {
+            when {
+                expression { params.PUSH_TO_ARTIFACTORY }
+            }
+            steps {
+              withCredentials([
+                    string(credentialsId: 'JFROG_URL', variable: 'JFROG_URL'),
+                    string(credentialsId: 'JFROG_USERNAME', variable: 'JFROG_USERNAME'),
+                    string(credentialsId: 'JFROG_TOKEN', variable: 'JFROG_TOKEN'),
+                    string(credentialsId: 'JFROG_IMAGE_TAG', variable: 'JFROG_IMAGE_TAG')                    
+                ])
+                sh """
+                  docker login ${JFROG_URL} --username ${JFROG_USERNAME} --password ${JFROG_TOKEN}
+                  docker tag ${SERVICE_NAME}:latest ${JFROG_IMAGE_TAG}/${SERVICE_NAME}:${BUILD_NUMBER}
+                  docker push ${JFROG_IMAGE_TAG}/${SERVICE_NAME}:${BUILD_NUMBER}
+                """
+                echo "Web image pushed to JFrog Artifactory successfully."
+            }
+        }
     }
 
     post {
