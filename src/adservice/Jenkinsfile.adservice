@@ -52,6 +52,13 @@ pipeline {
                 """
             }
         }
+
+        stage('Trivy Scan for Docker Web Image') {
+            steps {
+                sh "trivy image --severity HIGH,CRITICAL --exit-code 0 --scanners vuln ${SERVICE_NAME}:latest"
+            }
+        }  
+        
     }
 
     post {
