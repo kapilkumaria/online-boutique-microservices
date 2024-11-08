@@ -91,13 +91,14 @@ pipeline {
                     string(credentialsId: 'JFROG_USERNAME', variable: 'JFROG_USERNAME'),
                     string(credentialsId: 'JFROG_TOKEN', variable: 'JFROG_TOKEN'),
                     string(credentialsId: 'JFROG_IMAGE_TAG', variable: 'JFROG_IMAGE_TAG')                    
-                ])
+                ]) {
                 sh """
                   docker login ${JFROG_URL} --username ${JFROG_USERNAME} --password ${JFROG_TOKEN}
                   docker tag ${SERVICE_NAME}:latest ${JFROG_IMAGE_TAG}/${SERVICE_NAME}:${BUILD_NUMBER}
                   docker push ${JFROG_IMAGE_TAG}/${SERVICE_NAME}:${BUILD_NUMBER}
                 """
                 echo "Web image pushed to JFrog Artifactory successfully."
+                }
             }
         }
     }
