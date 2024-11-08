@@ -28,7 +28,7 @@ pipeline {
                     withSonarQubeEnv('sonarQube') {
 
                                    sh """
-                                        cd src/productcatalogservice
+                                        cd src/adservice
                                         chmod +x ./gradlew
                                         ./gradlew sonarqube || true \
                                             --init-script /root/.gradle-init/init.gradle \
