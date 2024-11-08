@@ -1,5 +1,9 @@
 pipeline {
     agent { label 'dev' }
+    parameters {
+        booleanParam(name: 'PUSH_TO_ECR', defaultValue: true, description: 'Push image to AWS ECR')
+        booleanParam(name: 'PUSH_TO_ARTIFACTORY', defaultValue: false, description: 'Push image to JFrog Artifactory')
+    }
 
     environment {
         REPO_URL = 'https://github.com/kapilkumaria/microservices-demo-sample.git' // Repository URL
@@ -61,6 +65,9 @@ pipeline {
         }
 
         stage('Push AdService Image to AWS ECR') {
+            when {
+                expression { params.PUSH_TO_ECR }
+            }
     
             steps {
                withCredentials([
