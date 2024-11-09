@@ -3,6 +3,7 @@ pipeline {
     parameters {
         booleanParam(name: 'PUSH_TO_ECR', defaultValue: true, description: 'Push image to AWS ECR')
         booleanParam(name: 'PUSH_TO_ARTIFACTORY', defaultValue: false, description: 'Push image to JFrog Artifactory')
+        booleanParam(name: 'PUSH_TO_DOCKERHUB', defaultValue: false, description: 'Push image to DockerHub')
     }
 
     environment {
@@ -103,6 +104,31 @@ pipeline {
                 }
             }
         }
+
+         stage('Push AdService Image to DockerHub') {
+            when {
+                expression { params.PUSH_TO_DOCKERHUB }
+            }
+            steps {
+              withCredentials([
+                    string(credentialsId: 'DOCKERHUB_URL', variable: 'DOCKERHUB_URL'), 
+                    string(credentialsId: 'DOCKERHUB_USERNAME', variable: 'DOCKERHUB_USERNAME'),
+                    string(credentialsId: 'DOCKERHUB_TOKEN', variable: 'DOCKERHUB_TOKEN'),
+                    string(credentialsId: 'DOCKERHUB_IMAGE_TAG', variable: 'DOCKERHUB_IMAGE_TAG'),
+
+              ]) {
+                sh '''
+                  echo "$DOCKERHUB_TOKEN" | docker login "$DOCKERHUB_URL" --username "$DOCKERHUB_USERNAME" --password-stdin
+                  docker tag $SERVICE_NAME:latest $DOCKERHUB_IMAGE_TAG/$SERVICE_NAME:$BUILD_NUMBER
+                  docker push $DOCKERHUB_IMAGE_TAG/$SERVICE_NAME:$BUILD_NUMBER
+                '''
+                echo "Web image pushed to DockerHub successfully."
+                }
+            }
+        }
+
+
+
     }
 
     post {
