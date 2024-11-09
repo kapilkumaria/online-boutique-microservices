@@ -131,28 +131,40 @@ pipeline {
                 script {
                     def manifestFile = "kubernetes-manifests/adservice.yaml"
 
-                    // Retrieve DockerHub repository and GitHub token in the same block
                     withCredentials([
                         string(credentialsId: 'GITHUB_TOKEN', variable: 'GITHUB_TOKEN'),
                         string(credentialsId: 'DOCKERHUB_IMAGE_TAG', variable: 'DOCKERHUB_IMAGE_TAG')
                     ]) {
-                        def newImageTag = "${DOCKERHUB_IMAGE_TAG}/${SERVICE_NAME}:${BUILD_NUMBER}"
+                        // Stash changes if needed (optional)
+                        sh 'git stash'
 
-                        // Update the image tag in the manifest file to use DockerHub image
+                        // Check out the branch with the Kubernetes manifests
+                        sh 'git fetch origin feature/kubernetes-manifests'
+                        sh 'git checkout feature/kubernetes-manifests'
+
+                        // Modify the manifest file with the new DockerHub image tag
+                        def newImageTag = "${DOCKERHUB_IMAGE_TAG}/${SERVICE_NAME}:${BUILD_NUMBER}"
                         sh """
+                            export DOCKERHUB_IMAGE_TAG=${DOCKERHUB_IMAGE_TAG}
+                            export SERVICE_NAME=${SERVICE_NAME}
+                            export BUILD_NUMBER=${BUILD_NUMBER}
                             sed -i 's|image: .*|image: ${newImageTag}|g' ${manifestFile}
                         """
-                        
-                        // Commit and push the updated manifest file to GitHub
+
+                        // Commit and push the changes to the kubernetes manifests branch
                         sh """
                             git config user.name "jenkins-bot"
                             git config user.email "jenkins-bot@yourdomain.com"
                             git add ${manifestFile}
                             git commit -m "Update image tag for ${SERVICE_NAME} to DockerHub ${BUILD_NUMBER}"
-                            
-                            # Push using token-based authentication
-                            git push https://jenkins-bot:${GITHUB_TOKEN}@github.com/kapilkumaria/microservices-demo-sample.git HEAD:feature/jenkinsfile-adservice
+                            git push https://jenkins-bot:${GITHUB_TOKEN}@github.com/kapilkumaria/microservices-demo-sample.git HEAD:feature/kubernetes-manifests
                         """
+
+                        // Return to the original branch (if required)
+                        sh 'git checkout feature/jenkinsfile-adservice'
+                        
+                        // Apply the stashed changes back (if any)
+                        sh 'git stash pop || true'
                     }
                 }
             }
