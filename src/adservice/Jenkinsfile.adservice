@@ -142,8 +142,14 @@ pipeline {
                         sh 'git fetch origin feature/kubernetes-manifests'
                         sh 'git checkout feature/kubernetes-manifests'
 
-                        // Pull latest changes and rebase
-                        sh 'git pull origin feature/kubernetes-manifests --rebase'
+                        // Pull latest changes with rebase and handle conflicts
+                        try {
+                            sh 'git pull origin feature/kubernetes-manifests --rebase'
+                        } catch (Exception e) {
+                            echo "Rebase conflict encountered. Aborting rebase."
+                            sh 'git rebase --abort'
+                            error("Rebase failed due to conflicts. Please resolve manually.")
+                        }
 
                         // Modify the manifest file with the new DockerHub image tag
                         def newImageTag = "${DOCKERHUB_IMAGE_TAG}/${SERVICE_NAME}:${BUILD_NUMBER}"
