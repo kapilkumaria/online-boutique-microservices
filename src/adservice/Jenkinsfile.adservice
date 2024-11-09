@@ -142,16 +142,15 @@ pipeline {
                         sh 'git fetch origin feature/kubernetes-manifests'
                         sh 'git checkout feature/kubernetes-manifests'
 
-                        // Clean up any leftover rebase state before attempting a new rebase
+                        // Remove leftover rebase state, if any
                         sh 'rm -rf .git/rebase-merge || true'
 
-                        // Pull latest changes with rebase and handle conflicts
+                        // Pull latest changes using merge
                         try {
-                            sh 'git pull origin feature/kubernetes-manifests --rebase'
+                            sh 'git pull origin feature/kubernetes-manifests --no-rebase'
                         } catch (Exception e) {
-                            echo "Rebase conflict encountered. Aborting rebase."
-                            sh 'git rebase --abort'
-                            error("Rebase failed due to conflicts. Please resolve manually.")
+                            echo "Merge conflict encountered. Please resolve manually."
+                            error("Merge failed due to conflicts. Please resolve manually.")
                         }
 
                         // Modify the manifest file with the new DockerHub image tag
