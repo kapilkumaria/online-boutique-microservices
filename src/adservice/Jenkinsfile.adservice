@@ -142,6 +142,9 @@ pipeline {
                         sh 'git fetch origin feature/kubernetes-manifests'
                         sh 'git checkout feature/kubernetes-manifests'
 
+                        // Clean up any leftover rebase state before attempting a new rebase
+                        sh 'rm -rf .git/rebase-merge || true'
+
                         // Pull latest changes with rebase and handle conflicts
                         try {
                             sh 'git pull origin feature/kubernetes-manifests --rebase'
