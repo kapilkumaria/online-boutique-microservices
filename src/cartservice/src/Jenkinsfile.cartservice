@@ -4,7 +4,7 @@ pipeline {
     environment {
         REPO_URL = 'https://github.com/kapilkumaria/microservices-demo-sample.git'
         SONARQUBE_SERVER = 'sonarQube'
-        SONARQUBE_URL = 'http://44.211.60.45:9000'
+        SONARQUBE_URL = 'http://52.2.64.174:9000'
         SERVICE_NAME = 'cartservice'
         PATH = "/usr/share/dotnet:/usr/bin:${env.PATH}"
     }
