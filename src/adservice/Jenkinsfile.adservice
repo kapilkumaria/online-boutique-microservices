@@ -51,6 +51,33 @@ pipeline {
                 """
             }
         }
+
+        stage('Update Kubernetes Manifest for ArgoCD') {
+            steps {
+                script {
+                    def manifestFile = "kubernetes-manifests/adservice.yaml"
+                    def newImageTag = "${ECR_REPO_MICROSERVICES}:${BUILD_NUMBER}"
+                    
+                    // Update the image tag in the manifest file
+                    sh """
+                        sed -i 's|image: .*|image: ${newImageTag}|g' ${manifestFile}
+                    """
+                    
+                    // Commit and push the updated manifest file
+                    withCredentials([string(credentialsId: 'GITHUB_TOKEN', variable: 'GITHUB_TOKEN')]) {
+                        sh """
+                            git config user.name "jenkins-bot"
+                            git config user.email "jenkins-bot@yourdomain.com"
+                            git add ${manifestFile}
+                            git commit -m "Update image tag for ${SERVICE_NAME} to ${BUILD_NUMBER}"
+                            
+                            # Push using token-based authentication
+                            git push https://jenkins-bot:${GITHUB_TOKEN}@github.com/kapilkumaria/microservices-demo-sample.git HEAD:feature/jenkinsfile-adservice
+                        """
+                    }
+                }
+            }
+        }
     }
 
     post {
