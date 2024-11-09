@@ -135,23 +135,12 @@ pipeline {
                         string(credentialsId: 'GITHUB_TOKEN', variable: 'GITHUB_TOKEN'),
                         string(credentialsId: 'DOCKERHUB_IMAGE_TAG', variable: 'DOCKERHUB_IMAGE_TAG')
                     ]) {
-                        // Stash any changes if needed
+                        // Stash changes if needed (optional)
                         sh 'git stash'
 
                         // Check out the branch with the Kubernetes manifests
                         sh 'git fetch origin feature/kubernetes-manifests'
                         sh 'git checkout feature/kubernetes-manifests'
-
-                        // Remove leftover rebase state, if any
-                        sh 'rm -rf .git/rebase-merge || true'
-
-                        // Pull latest changes using merge
-                        try {
-                            sh 'git pull origin feature/kubernetes-manifests --no-rebase'
-                        } catch (Exception e) {
-                            echo "Merge conflict encountered. Please resolve manually."
-                            error("Merge failed due to conflicts. Please resolve manually.")
-                        }
 
                         // Modify the manifest file with the new DockerHub image tag
                         def newImageTag = "${DOCKERHUB_IMAGE_TAG}/${SERVICE_NAME}:${BUILD_NUMBER}"
@@ -167,7 +156,7 @@ pipeline {
                             git config user.name "jenkins-bot"
                             git config user.email "jenkins-bot@yourdomain.com"
                             git add ${manifestFile}
-                            git commit -m "Update image tag for ${SERVICE_NAME} to DockerHub ${BUILD_NUMBER}" || true
+                            git commit -m "Update image tag for ${SERVICE_NAME} to DockerHub ${BUILD_NUMBER}"
                             git push https://jenkins-bot:${GITHUB_TOKEN}@github.com/kapilkumaria/microservices-demo-sample.git HEAD:feature/kubernetes-manifests
                         """
 
