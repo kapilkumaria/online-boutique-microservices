@@ -9,7 +9,7 @@ pipeline {
     environment {
         REPO_URL = 'https://github.com/kapilkumaria/microservices-demo-sample.git' // Repository URL
         SONARQUBE_SERVER = 'sonarQube' // SonarQube server name configured in Jenkins
-        SONARQUBE_URL = 'http://3.235.138.129:9000' // SonarQube server URL
+        SONARQUBE_URL = 'http://52.2.64.174:9000' // SonarQube server URL
         SONARQUBE_TOKEN = credentials('sonar-token') // SonarQube token stored in Jenkins
         SERVICE_NAME = 'adservice' // Specific service name for this Jenkinsfile
         ECR_REPO_MICROSERVICES = '931058976119.dkr.ecr.us-east-1.amazonaws.com/gcp-adservice'
