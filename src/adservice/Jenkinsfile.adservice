@@ -130,19 +130,20 @@ pipeline {
             steps {
                 script {
                     def manifestFile = "kubernetes-manifests/adservice-manifest.yaml"
-                    def newImageTag = "${DOCKERHUB_IMAGE_TAG}/${SERVICE_NAME}:${BUILD_NUMBER}"
-                    
-                    // Update the image tag in the manifest file to use DockerHub image
+
+                    // Retrieve DockerHub repository and GitHub token in the same block
                     withCredentials([
                         string(credentialsId: 'GITHUB_TOKEN', variable: 'GITHUB_TOKEN'),
                         string(credentialsId: 'DOCKERHUB_IMAGE_TAG', variable: 'DOCKERHUB_IMAGE_TAG')
                     ]) {
-                    sh """
-                        sed -i 's|image: .*|image: ${newImageTag}|g' ${manifestFile}
-                    """
-                    
-                    // Commit and push the updated manifest file to GitHub
-                    withCredentials([string(credentialsId: 'GITHUB_TOKEN', variable: 'GITHUB_TOKEN')]) {
+                        def newImageTag = "${DOCKERHUB_IMAGE_TAG}/${SERVICE_NAME}:${BUILD_NUMBER}"
+
+                        // Update the image tag in the manifest file to use DockerHub image
+                        sh """
+                            sed -i 's|image: .*|image: ${newImageTag}|g' ${manifestFile}
+                        """
+                        
+                        // Commit and push the updated manifest file to GitHub
                         sh """
                             git config user.name "jenkins-bot"
                             git config user.email "jenkins-bot@yourdomain.com"
@@ -152,8 +153,7 @@ pipeline {
                             # Push using token-based authentication
                             git push https://jenkins-bot:${GITHUB_TOKEN}@github.com/kapilkumaria/microservices-demo-sample.git HEAD:feature/jenkinsfile-adservice
                         """
-                       }
-                   }
+                    }
                 }
             }
         }
