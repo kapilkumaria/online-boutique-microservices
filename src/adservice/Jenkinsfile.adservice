@@ -135,12 +135,15 @@ pipeline {
                         string(credentialsId: 'GITHUB_TOKEN', variable: 'GITHUB_TOKEN'),
                         string(credentialsId: 'DOCKERHUB_IMAGE_TAG', variable: 'DOCKERHUB_IMAGE_TAG')
                     ]) {
-                        // Stash changes if needed (optional)
+                        // Stash any changes if needed
                         sh 'git stash'
 
                         // Check out the branch with the Kubernetes manifests
                         sh 'git fetch origin feature/kubernetes-manifests'
                         sh 'git checkout feature/kubernetes-manifests'
+
+                        // Pull latest changes and rebase
+                        sh 'git pull origin feature/kubernetes-manifests --rebase'
 
                         // Modify the manifest file with the new DockerHub image tag
                         def newImageTag = "${DOCKERHUB_IMAGE_TAG}/${SERVICE_NAME}:${BUILD_NUMBER}"
@@ -156,7 +159,7 @@ pipeline {
                             git config user.name "jenkins-bot"
                             git config user.email "jenkins-bot@yourdomain.com"
                             git add ${manifestFile}
-                            git commit -m "Update image tag for ${SERVICE_NAME} to DockerHub ${BUILD_NUMBER}"
+                            git commit -m "Update image tag for ${SERVICE_NAME} to DockerHub ${BUILD_NUMBER}" || true
                             git push https://jenkins-bot:${GITHUB_TOKEN}@github.com/kapilkumaria/microservices-demo-sample.git HEAD:feature/kubernetes-manifests
                         """
 
