@@ -129,7 +129,7 @@ pipeline {
         stage('Update Kubernetes Manifest for ArgoCD') {
             steps {
                 script {
-                    def manifestFile = "kubernetes-manifests/adservice-manifest.yaml"
+                    def manifestFile = "kubernetes-manifests/adservice.yaml"
 
                     // Retrieve DockerHub repository and GitHub token in the same block
                     withCredentials([
