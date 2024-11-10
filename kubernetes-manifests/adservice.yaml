@@ -18,7 +18,7 @@ spec:
     spec:
       containers:
         - name: adservice
-          image: kappu1512/cartservice:42
+          image: kappu1512/adservice:143
           ports:
             - containerPort: 9555
           env:
