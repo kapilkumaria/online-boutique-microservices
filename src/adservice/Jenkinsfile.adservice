@@ -135,7 +135,16 @@ pipeline {
             ]) {
                 // Ensure we have the latest changes from all remote branches
                 sh 'git fetch --all'
-                sh 'git checkout -B feature/kubernetes-manifests origin/feature/kubernetes-manifests'
+
+                // Switch to the feature/kubernetes-manifests branch, creating it if needed
+                sh '''
+                    if git rev-parse --verify origin/feature/kubernetes-manifests > /dev/null 2>&1; then
+                        git checkout feature/kubernetes-manifests || git checkout -b feature/kubernetes-manifests origin/feature/kubernetes-manifests
+                    else
+                        echo "Remote branch feature/kubernetes-manifests not found"
+                        exit 1
+                    fi
+                '''
 
                 // Stash any local changes to avoid conflicts
                 sh 'git stash'
@@ -167,6 +176,7 @@ pipeline {
         }
     }
 }
+
 
 }
 
