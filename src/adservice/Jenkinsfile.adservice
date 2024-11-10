@@ -121,38 +121,47 @@ pipeline {
         }
 
         stage('Update Kubernetes Manifest for ArgoCD') {
-            steps {
-                script {
-                    withCredentials([
-                        string(credentialsId: 'GITHUB_TOKEN', variable: 'GITHUB_TOKEN'),
-                        string(credentialsId: 'DOCKERHUB_IMAGE_TAG', variable: 'DOCKERHUB_IMAGE_TAG')
-                    ]) {
-                        // Ensure we have the latest changes from the remote branch
-                        sh 'git fetch origin'
-                        sh 'git checkout -B feature/kubernetes-manifests origin/feature/kubernetes-manifests'
-                        sh 'git pull --rebase origin feature/kubernetes-manifests'
+    steps {
+        script {
+            withCredentials([
+                string(credentialsId: 'GITHUB_TOKEN', variable: 'GITHUB_TOKEN'),
+                string(credentialsId: 'DOCKERHUB_IMAGE_TAG', variable: 'DOCKERHUB_IMAGE_TAG')
+            ]) {
+                // Ensure we have the latest changes from the remote branch
+                sh 'git fetch origin'
+                sh 'git checkout -B feature/kubernetes-manifests origin/feature/kubernetes-manifests'
 
-                        // Modify the manifest file with the new DockerHub image tag
-                        def newImageTag = "${DOCKERHUB_IMAGE_TAG}/${SERVICE_NAME}:${BUILD_NUMBER}"
-                        sh """
-                            sed -i 's|image: .*|image: ${newImageTag}|g' kubernetes-manifests/adservice.yaml
-                        """
+                // Stash any local changes to avoid conflicts
+                sh 'git stash'
 
-                        // Commit and push the changes to the feature/kubernetes-manifests branch
-                        sh """
-                            git config user.name "jenkins-bot"
-                            git config user.email "jenkins-bot@yourdomain.com"
-                            git add kubernetes-manifests/adservice.yaml
-                            git commit -m "Update image tag for ${SERVICE_NAME} to DockerHub ${BUILD_NUMBER}"
-                            git push https://jenkins-bot:${GITHUB_TOKEN}@github.com/kapilkumaria/online-boutique-microservices.git HEAD:feature/kubernetes-manifests
-                        """
+                // Pull the latest changes with rebase to prevent conflicts
+                sh 'git pull --rebase origin feature/kubernetes-manifests'
 
-                        // Return to the original branch (if required)
-                        sh 'git checkout feature/jenkinsfile-adservice'
-                    }
-                }
+                // Apply stashed changes (if any)
+                sh 'git stash pop || true'
+
+                // Modify the manifest file with the new DockerHub image tag
+                def newImageTag = "${DOCKERHUB_IMAGE_TAG}/${SERVICE_NAME}:${BUILD_NUMBER}"
+                sh """
+                    sed -i 's|image: .*|image: ${newImageTag}|g' kubernetes-manifests/adservice.yaml
+                """
+
+                // Commit and push the changes to the feature/kubernetes-manifests branch
+                sh """
+                    git config user.name "jenkins-bot"
+                    git config user.email "jenkins-bot@yourdomain.com"
+                    git add kubernetes-manifests/adservice.yaml
+                    git commit -m "Update image tag for ${SERVICE_NAME} to DockerHub ${BUILD_NUMBER}"
+                    git push https://jenkins-bot:${GITHUB_TOKEN}@github.com/kapilkumaria/online-boutique-microservices.git HEAD:feature/kubernetes-manifests
+                """
+
+                // Return to the original branch (if required)
+                sh 'git checkout feature/jenkinsfile-adservice'
             }
         }
+    }
+}
+
     }
 
     post {
