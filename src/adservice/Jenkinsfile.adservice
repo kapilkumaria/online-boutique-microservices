@@ -133,28 +133,12 @@ pipeline {
                 string(credentialsId: 'GITHUB_TOKEN', variable: 'GITHUB_TOKEN'),
                 string(credentialsId: 'DOCKERHUB_IMAGE_TAG', variable: 'DOCKERHUB_IMAGE_TAG')
             ]) {
-                // Perform a fresh clone of the repository to ensure all branches are available
-                sh 'rm -rf * .git' // Clean up any existing files or .git directory to avoid conflicts
+                // Ensure a clean workspace by deleting all files, including hidden ones
+                sh 'rm -rf .* *'
+
+                // Clone the repository afresh
                 sh 'git clone https://jenkins-bot:${GITHUB_TOKEN}@github.com/kapilkumaria/online-boutique-microservices.git .'
-                
-                // Check out the specific branch
-                sh '''
-                    if git rev-parse --verify origin/feature/kubernetes-manifests > /dev/null 2>&1; then
-                        git checkout feature/kubernetes-manifests || git checkout -b feature/kubernetes-manifests origin/feature/kubernetes-manifests
-                    else
-                        echo "Remote branch feature/kubernetes-manifests not found"
-                        exit 1
-                    fi
-                '''
-
-                // Stash any local changes to avoid conflicts
-                sh 'git stash'
-
-                // Pull the latest changes with rebase to prevent conflicts
-                sh 'git pull --rebase origin feature/kubernetes-manifests'
-
-                // Apply stashed changes (if any)
-                sh 'git stash pop || true'
+                sh 'git checkout feature/kubernetes-manifests'
 
                 // Modify the manifest file with the new DockerHub image tag
                 def newImageTag = "${DOCKERHUB_IMAGE_TAG}/${SERVICE_NAME}:${BUILD_NUMBER}"
@@ -177,6 +161,7 @@ pipeline {
         }
     }
 }
+
 
 
 
