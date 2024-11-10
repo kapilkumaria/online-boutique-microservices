@@ -133,13 +133,13 @@ pipeline {
                 string(credentialsId: 'GITHUB_TOKEN', variable: 'GITHUB_TOKEN'),
                 string(credentialsId: 'DOCKERHUB_IMAGE_TAG', variable: 'DOCKERHUB_IMAGE_TAG')
             ]) {
-                // Ensure we have the latest changes from all remote branches
-                sh 'git fetch --all'
+                // Fetch all remote branches with the full ref path
+                sh 'git fetch origin refs/heads/feature/kubernetes-manifests:refs/remotes/origin/feature/kubernetes-manifests'
 
-                // Switch to the feature/kubernetes-manifests branch, creating it if needed
+                // Check if the branch is available, then check it out or create a new one from the remote ref
                 sh '''
                     if git rev-parse --verify origin/feature/kubernetes-manifests > /dev/null 2>&1; then
-                        git checkout feature/kubernetes-manifests || git checkout -b feature/kubernetes-manifests origin/feature/kubernetes-manifests
+                        git checkout -B feature/kubernetes-manifests origin/feature/kubernetes-manifests
                     else
                         echo "Remote branch feature/kubernetes-manifests not found"
                         exit 1
