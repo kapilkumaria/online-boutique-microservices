@@ -133,13 +133,14 @@ pipeline {
                 string(credentialsId: 'GITHUB_TOKEN', variable: 'GITHUB_TOKEN'),
                 string(credentialsId: 'DOCKERHUB_IMAGE_TAG', variable: 'DOCKERHUB_IMAGE_TAG')
             ]) {
-                // Fetch all remote branches with the full ref path
-                sh 'git fetch origin refs/heads/feature/kubernetes-manifests:refs/remotes/origin/feature/kubernetes-manifests'
-
-                // Check if the branch is available, then check it out or create a new one from the remote ref
+                // Perform a fresh clone of the repository to ensure all branches are available
+                sh 'rm -rf * .git' // Clean up any existing files or .git directory to avoid conflicts
+                sh 'git clone https://jenkins-bot:${GITHUB_TOKEN}@github.com/kapilkumaria/online-boutique-microservices.git .'
+                
+                // Check out the specific branch
                 sh '''
                     if git rev-parse --verify origin/feature/kubernetes-manifests > /dev/null 2>&1; then
-                        git checkout -B feature/kubernetes-manifests origin/feature/kubernetes-manifests
+                        git checkout feature/kubernetes-manifests || git checkout -b feature/kubernetes-manifests origin/feature/kubernetes-manifests
                     else
                         echo "Remote branch feature/kubernetes-manifests not found"
                         exit 1
@@ -176,6 +177,7 @@ pipeline {
         }
     }
 }
+
 
 
 }
