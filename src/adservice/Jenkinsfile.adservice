@@ -28,18 +28,17 @@ pipeline {
             steps {
                 script {
                     withSonarQubeEnv('sonarQube') {
-
-                                   sh """
-                                        cd src/adservice
-                                        chmod +x ./gradlew
-                                        ./gradlew sonarqube || true \
-                                            --init-script /root/.gradle-init/init.gradle \
-                                            --no-daemon \
-                                            -Dsonar.projectKey=${SERVICE_NAME} \
-                                            -Dsonar.sources=. \
-                                            -Dsonar.host.url=$SONARQUBE_URL \
-                                            -Dsonar.login=$SONARQUBE_TOKEN
-                                    """
+                        sh """
+                            cd src/adservice
+                            chmod +x ./gradlew
+                            ./gradlew sonarqube || true \
+                                --init-script /root/.gradle-init/init.gradle \
+                                --no-daemon \
+                                -Dsonar.projectKey=${SERVICE_NAME} \
+                                -Dsonar.sources=. \
+                                -Dsonar.host.url=$SONARQUBE_URL \
+                                -Dsonar.login=$SONARQUBE_TOKEN
+                        """
                     }
                 }
            }
@@ -66,100 +65,94 @@ pipeline {
             }
     
             steps {
-               withCredentials([
+                withCredentials([
                     string(credentialsId: 'AWS_ACCESS_KEY_ID', variable: 'AWS_ACCESS_KEY_ID'),
                     string(credentialsId: 'AWS_SECRET_ACCESS_KEY', variable: 'AWS_SECRET_ACCESS_KEY'),
-                    
                 ]) {
                     sh '''
                       aws ecr get-login-password --region us-east-1 | docker login --username AWS --password-stdin 931058976119.dkr.ecr.us-east-1.amazonaws.com
                       docker tag ${SERVICE_NAME}:latest ${ECR_REPO_MICROSERVICES}:${BUILD_NUMBER}
                       docker push ${ECR_REPO_MICROSERVICES}:${BUILD_NUMBER}
                     '''
-                    }
+                }
             }
-         }
+        }
 
-         
         stage('Push AdService Image to JFrog Artifactory') {
             when {
                 expression { params.PUSH_TO_ARTIFACTORY }
             }
             steps {
-              withCredentials([
+                withCredentials([
                     string(credentialsId: 'JFROG_URL', variable: 'JFROG_URL'),
                     string(credentialsId: 'JFROG_USERNAME', variable: 'JFROG_USERNAME'),
                     string(credentialsId: 'JFROG_TOKEN', variable: 'JFROG_TOKEN'),
                     string(credentialsId: 'JFROG_IMAGE_TAG', variable: 'JFROG_IMAGE_TAG')                    
                 ]) {
-                sh '''
- 
-                  echo "$JFROG_TOKEN" | docker login "$JFROG_URL" --username "$JFROG_USERNAME" --password-stdin
-
-                  docker tag $SERVICE_NAME:latest $JFROG_IMAGE_TAG/$SERVICE_NAME:$BUILD_NUMBER
-                  docker push $JFROG_IMAGE_TAG/$SERVICE_NAME:$BUILD_NUMBER
-                '''
-                echo "Web image pushed to JFrog Artifactory successfully."
+                    sh '''
+                      echo "$JFROG_TOKEN" | docker login "$JFROG_URL" --username "$JFROG_USERNAME" --password-stdin
+                      docker tag $SERVICE_NAME:latest $JFROG_IMAGE_TAG/$SERVICE_NAME:$BUILD_NUMBER
+                      docker push $JFROG_IMAGE_TAG/$SERVICE_NAME:$BUILD_NUMBER
+                    '''
+                    echo "Web image pushed to JFrog Artifactory successfully."
                 }
             }
         }
 
-         stage('Push AdService Image to DockerHub') {
+        stage('Push AdService Image to DockerHub') {
             when {
                 expression { params.PUSH_TO_DOCKERHUB }
             }
             steps {
-              withCredentials([
+                withCredentials([
                     string(credentialsId: 'DOCKERHUB_URL', variable: 'DOCKERHUB_URL'), 
                     string(credentialsId: 'DOCKERHUB_USERNAME', variable: 'DOCKERHUB_USERNAME'),
                     string(credentialsId: 'DOCKERHUB_TOKEN', variable: 'DOCKERHUB_TOKEN'),
                     string(credentialsId: 'DOCKERHUB_IMAGE_TAG', variable: 'DOCKERHUB_IMAGE_TAG'),
-
-              ]) {
-                sh '''
-                  echo "$DOCKERHUB_TOKEN" | docker login "$DOCKERHUB_URL" --username "$DOCKERHUB_USERNAME" --password-stdin
-                  docker tag $SERVICE_NAME:latest $DOCKERHUB_IMAGE_TAG/$SERVICE_NAME:$BUILD_NUMBER
-                  docker push $DOCKERHUB_IMAGE_TAG/$SERVICE_NAME:$BUILD_NUMBER
-                '''
-                echo "Web image pushed to DockerHub successfully."
+                ]) {
+                    sh '''
+                      echo "$DOCKERHUB_TOKEN" | docker login "$DOCKERHUB_URL" --username "$DOCKERHUB_USERNAME" --password-stdin
+                      docker tag $SERVICE_NAME:latest $DOCKERHUB_IMAGE_TAG/$SERVICE_NAME:$BUILD_NUMBER
+                      docker push $DOCKERHUB_IMAGE_TAG/$SERVICE_NAME:$BUILD_NUMBER
+                    '''
+                    echo "Web image pushed to DockerHub successfully."
                 }
             }
         }
 
         stage('Update Kubernetes Manifest for ArgoCD') {
-    steps {
-        script {
-            withCredentials([
-                string(credentialsId: 'GITHUB_TOKEN', variable: 'GITHUB_TOKEN'),
-                string(credentialsId: 'DOCKERHUB_IMAGE_TAG', variable: 'DOCKERHUB_IMAGE_TAG')
-            ]) {
-                // Force checkout of the specific branch
-                sh 'git fetch origin'
-                sh 'git checkout -B feature/kubernetes-manifests origin/feature/kubernetes-manifests'
+            steps {
+                script {
+                    withCredentials([
+                        string(credentialsId: 'GITHUB_TOKEN', variable: 'GITHUB_TOKEN'),
+                        string(credentialsId: 'DOCKERHUB_IMAGE_TAG', variable: 'DOCKERHUB_IMAGE_TAG')
+                    ]) {
+                        // Ensure we have the latest changes from the remote branch
+                        sh 'git fetch origin'
+                        sh 'git checkout -B feature/kubernetes-manifests origin/feature/kubernetes-manifests'
+                        sh 'git pull --rebase origin feature/kubernetes-manifests'
 
-                // Modify the manifest file with the new DockerHub image tag
-                def newImageTag = "${DOCKERHUB_IMAGE_TAG}/${SERVICE_NAME}:${BUILD_NUMBER}"
-                sh """
-                    sed -i 's|image: .*|image: ${newImageTag}|g' kubernetes-manifests/adservice.yaml
-                """
+                        // Modify the manifest file with the new DockerHub image tag
+                        def newImageTag = "${DOCKERHUB_IMAGE_TAG}/${SERVICE_NAME}:${BUILD_NUMBER}"
+                        sh """
+                            sed -i 's|image: .*|image: ${newImageTag}|g' kubernetes-manifests/adservice.yaml
+                        """
 
-                // Commit and push the changes to the feature/kubernetes-manifests branch
-                sh """
-                    git config user.name "jenkins-bot"
-                    git config user.email "jenkins-bot@yourdomain.com"
-                    git add kubernetes-manifests/adservice.yaml
-                    git commit -m "Update image tag for ${SERVICE_NAME} to DockerHub ${BUILD_NUMBER}"
-                    git push https://jenkins-bot:${GITHUB_TOKEN}@github.com/kapilkumaria/online-boutique-microservices.git HEAD:feature/kubernetes-manifests
-                """
+                        // Commit and push the changes to the feature/kubernetes-manifests branch
+                        sh """
+                            git config user.name "jenkins-bot"
+                            git config user.email "jenkins-bot@yourdomain.com"
+                            git add kubernetes-manifests/adservice.yaml
+                            git commit -m "Update image tag for ${SERVICE_NAME} to DockerHub ${BUILD_NUMBER}"
+                            git push https://jenkins-bot:${GITHUB_TOKEN}@github.com/kapilkumaria/online-boutique-microservices.git HEAD:feature/kubernetes-manifests
+                        """
 
-                // Return to the original branch (if required)
-                sh 'git checkout feature/jenkinsfile-adservice'
+                        // Return to the original branch (if required)
+                        sh 'git checkout feature/jenkinsfile-adservice'
+                    }
+                }
             }
         }
-    }
-}
-
-
     }
 
     post {
@@ -171,4 +164,3 @@ pipeline {
         }
     }
 }
-
