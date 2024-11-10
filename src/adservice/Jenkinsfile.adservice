@@ -133,27 +133,17 @@ pipeline {
                 string(credentialsId: 'GITHUB_TOKEN', variable: 'GITHUB_TOKEN'),
                 string(credentialsId: 'DOCKERHUB_IMAGE_TAG', variable: 'DOCKERHUB_IMAGE_TAG')
             ]) {
-                // Ensure Jenkins has the latest branch list
-                sh 'git remote update origin --prune'
-                sh 'git fetch --all'
-
-                // Stash changes if needed (optional)
-                sh 'git stash'
-
-                // Fetch and checkout the Kubernetes manifests branch
-                sh 'git fetch origin feature/kubernetes-manifests'
-                sh 'git checkout feature/kubernetes-manifests'
+                // Force checkout of the specific branch
+                sh 'git fetch origin'
+                sh 'git checkout -B feature/kubernetes-manifests origin/feature/kubernetes-manifests'
 
                 // Modify the manifest file with the new DockerHub image tag
                 def newImageTag = "${DOCKERHUB_IMAGE_TAG}/${SERVICE_NAME}:${BUILD_NUMBER}"
                 sh """
-                    export DOCKERHUB_IMAGE_TAG=${DOCKERHUB_IMAGE_TAG}
-                    export SERVICE_NAME=${SERVICE_NAME}
-                    export BUILD_NUMBER=${BUILD_NUMBER}
                     sed -i 's|image: .*|image: ${newImageTag}|g' kubernetes-manifests/adservice.yaml
                 """
 
-                // Commit and push the changes to the kubernetes manifests branch
+                // Commit and push the changes to the feature/kubernetes-manifests branch
                 sh """
                     git config user.name "jenkins-bot"
                     git config user.email "jenkins-bot@yourdomain.com"
@@ -164,13 +154,11 @@ pipeline {
 
                 // Return to the original branch (if required)
                 sh 'git checkout feature/jenkinsfile-adservice'
-                
-                // Apply the stashed changes back (if any)
-                sh 'git stash pop || true'
             }
         }
     }
 }
+
 
     }
 
